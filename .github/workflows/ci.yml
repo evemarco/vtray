@@ -1,6 +1,7 @@
 name: General CI
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:

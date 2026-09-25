@@ -9,9 +9,9 @@ $if windows {
 $if linux {
 	#define TRAY_APPINDICATOR 1
 	#pkgconfig --cflags gtk+-3.0
-	#pkgconfig --cflags appindicator3-0.1
+	#pkgconfig --cflags ayatana-appindicator3-0.1
 	#pkgconfig --cflags gdk-pixbuf-2.0
-	#pkgconfig --libs appindicator3-0.1
+	#pkgconfig --libs ayatana-appindicator3-0.1
 }
 
 $if macos {

@@ -16,7 +16,7 @@ few small features.
 | # | Change | Why |
 |---|--------|-----|
 | 1 | Flattened layout (`src/` removed) | V >= 0.5 refuses the virtual `src/` module root |
-| 2 | Linux link flags fixed (gtk3 + `--libs appindicator3-0.1`) | Upstream declared cflags only (gtk2 era) → `DSO missing` link errors |
+| 2 | Linux build flags: gtk3 + `ayatana-appindicator3-0.1` (cflags **and** libs) | Upstream declared gtk2-era cflags only → `DSO missing` link errors; the legacy `libappindicator` include path no longer exists on recent distros |
 | 3 | UTF-8 → UTF-16 conversion on Windows (`_tray_wide()`) | V's generated C defines `UNICODE` → *W* (UTF-16) APIs are selected; upstream fed raw UTF-8 into them → garbled CJK-looking menus |
 | 4 | Tooltip support: `Tray.set_tooltip()` | Upstream had none (`NIF_TIP` absent, no field in `struct tray`) |
 | 5 | `#flag windows -mwindows` | GUI subsystem: no stray console window next to the tray app |
@@ -30,8 +30,8 @@ menu text is converted per item when the menu is (re)built.
 ## Requirements
 
 ### Linux
-- `libayatana-appindicator` (provides the `appindicator3-0.1` pkg-config module
-  and `libappindicator3.so`) and GTK 3:
+- `libayatana-appindicator` and GTK 3 (the module builds against the
+  `ayatana-appindicator3-0.1` pkg-config module):
   - Arch: `sudo pacman -S libayatana-appindicator gtk3`
   - Debian/Ubuntu: `sudo apt install libayatana-appindicator3-dev libgtk-3-dev \
 libgdk-pixbuf-2.0-dev`

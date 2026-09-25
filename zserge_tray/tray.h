@@ -25,7 +25,12 @@ static void tray_update(struct tray *tray);
 #if defined(TRAY_APPINDICATOR)
 
 #include <gtk/gtk.h>
+// modern distros ship libayatana only; keep the legacy path as a fallback
+#if __has_include(<libayatana-appindicator/app-indicator.h>)
+#include <libayatana-appindicator/app-indicator.h>
+#else
 #include <libappindicator/app-indicator.h>
+#endif
 
 #define TRAY_APPINDICATOR_ID "tray-id"
 

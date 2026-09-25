@@ -35,5 +35,6 @@ fn main() {
 		),
 	])
 	t.init()
-	for t.loop(1) == 0 {}
+	for t.loop(1) == 0 {
+	}
 }

@@ -84,6 +84,13 @@ jobs:
         with:
           path: m
 
+      - name: Link the local vtray folder in ~/.vmodules/vtray
+        run: |
+          mkdir -p ~/.vmodules
+          rm -rf ~/.vmodules/vtray
+          ln -s $(pwd)/m ~/.vmodules/vtray
+          v version
+
       - name: Cross-compile for Windows
         run: |
           cd m

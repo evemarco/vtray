@@ -1,37 +1,134 @@
-# Description
-A V wrapper for the C library https://github.com/zserge/tray .
+# vtray
 
-It allows you to make cross platform apps with [V](https://github.com/vlang/v), that show a small icon
-and menu in the system tray on the supported platforms (linux, macos, 
-windows).
+A light cross-platform **system tray module for [V](https://vlang.io)**: show an
+icon and a menu in the system tray, with no main window — on **Linux** (X11 and
+**Wayland**, via libappindicator/StatusNotifierItem), **Windows** (native Win32
+`Shell_NotifyIcon`) and **macOS** (AppKit).
 
-See [a simple example of a system tray app](https://github.com/spytheman/vtray/blob/master/examples/simple_tray.v).
+This is a **fork of [spytheman/vtray](https://github.com/spytheman/vtray)**,
+which wraps the tiny C library [zserge/tray](https://github.com/zserge/tray)
+(vendored and patched here, MIT). The upstream module had not kept up with
+modern V and did not work correctly on Windows; this fork fixes that and adds a
+few small features.
 
-## Installation
-You can install the module in 2 ways:
+## Changes vs upstream
 
-* Through vpm (in this case, use `import spytheman.vtray` in your app)
+| # | Change | Why |
+|---|--------|-----|
+| 1 | Flattened layout (`src/` removed) | V >= 0.5 refuses the virtual `src/` module root |
+| 2 | Linux link flags fixed (gtk3 + `--libs appindicator3-0.1`) | Upstream declared cflags only (gtk2 era) → `DSO missing` link errors |
+| 3 | UTF-8 → UTF-16 conversion on Windows (`_tray_wide()`) | V's generated C defines `UNICODE` → *W* (UTF-16) APIs are selected; upstream fed raw UTF-8 into them → garbled CJK-looking menus |
+| 4 | Tooltip support: `Tray.set_tooltip()` | Upstream had none (`NIF_TIP` absent, no field in `struct tray`) |
+| 5 | `#flag windows -mwindows` | GUI subsystem: no stray console window next to the tray app |
+| 6 | Embedded-icon mode: `set_icon('')` loads ICON resource id 1 | File icons break from a network path; a resource lives in the binary (and shows in Explorer). Shared icons never `DestroyIcon`ed |
+| 7 | Windows icons must be `.ico` — documented | `ExtractIconEx` never read PNGs; upstream example shipped a `.png` → empty icon slot |
 
-`v install spytheman.vtray`
+Internal: the C tray window class is now `L"TRAY"` (wide), icon paths are
+converted with `MultiByteToWideChar(CP_UTF8, ...)` at the C boundary, and the
+menu text is converted per item when the menu is (re)built.
 
+## Requirements
 
-* Directly from github, to a local folder in your app's src/ folder 
-(in this case, use `import vtray` in your app):
+### Linux
+- `libayatana-appindicator` (provides the `appindicator3-0.1` pkg-config module
+  and `libappindicator3.so`) and GTK 3:
+  - Arch: `sudo pacman -S libayatana-appindicator gtk3`
+  - Debian/Ubuntu: `sudo apt install libayatana-appindicator3-dev libgtk-3-dev \
+libgdk-pixbuf-2.0-dev`
+- A desktop environment implementing the StatusNotifierItem protocol (Plasma,
+  GNOME with an AppIndicator extension, XFCE, ...). SNI is the only tray
+  protocol that works under **Wayland**.
 
-`git submodule add https://github.com/spytheman/vtray src/vtray`
+### Windows
+Native WinAPI — no external dependency at build or run time. Cross-compile from
+Linux with either toolchain:
+- `mingw-w64-gcc` (Arch: `sudo pacman -S mingw-w64-gcc`), or
+- `llvm-mingw` (clang ≥ 16 treats `incompatible-pointer-types` as an *error*,
+  gcc as a warning — pass `-cflags '-Wno-error=incompatible-pointer-types'`).
 
-## Dependencies:
+## Install
 
-This module is currently tested to work well on Ubuntu 20.04 .
-It depends on libappindicator3-dev, libgtk2.0-dev and libgdk-pixbuf2.0-dev.
+Via vpm:
 
-You can install those with:
 ```sh
-sudo apt install --quiet -y libappindicator3-dev libgtk2.0-dev libgdk-pixbuf2.0-dev
+v install evemarco/vtray
 ```
 
-It currently fails to compile on latest macOS Sonoma 14.0.
+then `import evemarco.vtray` in your code. Or vendor the module (git submodule
+or plain copy of this folder) and just `import vtray` — the directory name
+resolves it locally.
 
-It is not tested at all on Windows for now, but cross compiles for it with:
-`v -os windows examples/simple_tray.v`
+## Usage
 
+```v
+import vtray
+
+fn main() {
+	mut t := vtray.new()
+	$if windows {
+		t.set_icon('app.ico') // .ico file...
+		// ...or an ICON resource embedded in the exe (see below): t.set_icon('')
+	} $else {
+		t.set_icon('icon.png') // PNG path, or an icon-theme name
+	}
+	t.set_tooltip('my app')
+	t.set_menu([
+		vtray.new_menu_item(text: 'checked by default', checked: 1),
+		vtray.new_menu_item(text: 'disabled', disabled: 1),
+		vtray.new_menu_item(text: '-'),
+		vtray.new_menu_item(
+			text: 'quit'
+			cb:   fn [mut t] (_ &vtray.MenuItem) {
+				t.exit()
+			}
+		),
+	])
+	t.init()
+	for t.loop(1) == 0 {} // blocking loop; returns -1 after t.exit()
+}
+```
+
+See `examples/simple_tray.v` for a complete runnable demo.
+
+### Embedding the Windows icon in the executable (recommended)
+
+File-based icons break when the exe is launched from a network path. Compile
+the icon as a Win32 resource instead, link it, and use `t.set_icon('')`:
+
+```sh
+# icon.rc contains:  1 ICON "app.ico"
+x86_64-w64-mingw32-windres icon.rc -O coff -o icon.res.o
+```
+
+```v
+// in your main.v, before building:
+#flag windows 'icon.res.o'
+```
+
+```sh
+v -os windows -o app.exe main.v
+```
+
+The icon then travels inside the binary and also shows on the exe file in
+Explorer.
+
+### Threading model
+
+All `vtray` calls must happen on the main thread; callbacks fire on that same
+thread. For real applications: do the work in `spawn`ed threads, publish
+results through a `chan`, and drain it in a non-blocking loop —
+`ch.try_pop(mut s) == .success`, then `t.loop(0)`, then a short `time.sleep`.
+
+## Testing
+
+```sh
+v test .            # headless unit tests (no tray needed)
+v should-compile-all examples/
+```
+
+CI builds Linux natively and cross-compiles Windows on every push.
+
+## License
+
+MIT. Contains vendored code from [zserge/tray](https://github.com/zserge/tray)
+(MIT) and changes first developed in this fork — see the table above.

@@ -1,7 +1,7 @@
 Module {
 	name: 'vtray'
-	description: 'A cross plaform module for implementing a systray icon with a popup menu'
-	version: '0.1.0'
+	description: 'Cross-platform system tray icon with popup menu (Linux StatusNotifierItem, Windows WinAPI, macOS AppKit)'
+	version: '0.2.0'
 	license: 'MIT'
 	dependencies: []
 }

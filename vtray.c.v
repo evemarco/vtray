@@ -3,28 +3,30 @@ module vtray
 $if windows {
 	#define TRAY_WINAPI 1
 	#flag windows -lshell32
+	#flag windows -mwindows
 }
 
 $if linux {
 	#define TRAY_APPINDICATOR 1
-	#pkgconfig --cflags gtk+-2.0
+	#pkgconfig --cflags gtk+-3.0
 	#pkgconfig --cflags appindicator3-0.1
 	#pkgconfig --cflags gdk-pixbuf-2.0
-	#flag linux -lappindicator3
+	#pkgconfig --libs appindicator3-0.1
 }
 
 $if macos {
 	#define TRAY_APPKIT 1
 }
 
-#include "@VMODROOT/src/zserge_tray/tray.h"
+#include "zserge_tray/tray.h"
 
 type FnCTrayMenuCb = fn (pmenu &C.tray_menu)
 
 pub struct C.tray {
 pub mut:
-	icon &char
-	menu &C.tray_menu
+	icon    &char
+	tooltip &char
+	menu    &C.tray_menu
 }
 
 // Note: menu arrays must be terminated with a NULL item, e.g. the last item in the array must have text field set to NULL.
@@ -55,8 +57,9 @@ fn C.tray_exit()
 pub struct Tray {
 pub mut:
 	ctray  C.tray = C.tray{
-		icon: 0
-		menu: 0
+		icon:    0
+		tooltip: 0
+		menu:    0
 	}
 	mitems []MenuItem
 }
@@ -85,6 +88,12 @@ pub fn new_menu_item(params MenuItem) MenuItem {
 
 pub fn (mut t Tray) set_icon(path string) {
 	t.ctray.icon = path.str
+}
+
+// set_tooltip: the string must outlive the tray (V string literals are static;
+// keep dynamic strings referenced for the tray's lifetime)
+pub fn (mut t Tray) set_tooltip(text string) {
+	t.ctray.tooltip = text.str
 }
 
 pub fn (mut t Tray) init() int {

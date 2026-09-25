@@ -16,11 +16,11 @@ few small features.
 | # | Change | Why |
 |---|--------|-----|
 | 1 | Flattened layout (`src/` removed) | V >= 0.5 refuses the virtual `src/` module root |
-| 2 | Linux build flags: gtk3 + `ayatana-appindicator3-0.1` (cflags **and** libs) | Upstream declared gtk2-era cflags only → `DSO missing` link errors; the legacy `libappindicator` include path no longer exists on recent distros |
+| 2 | Linux build flags: gtk3 + `ayatana-appindicator3-0.1` (cflags **and** libs) | Upstream declared gtk2-era cflags only → link errors; the legacy include path is gone on recent distros |
 | 3 | UTF-8 → UTF-16 conversion on Windows (`_tray_wide()`) | V's generated C defines `UNICODE` → *W* (UTF-16) APIs are selected; upstream fed raw UTF-8 into them → garbled CJK-looking menus |
 | 4 | Tooltip support: `Tray.set_tooltip()` | Upstream had none (`NIF_TIP` absent, no field in `struct tray`) |
 | 5 | `#flag windows -mwindows` | GUI subsystem: no stray console window next to the tray app |
-| 6 | Embedded-icon mode: `set_icon('')` loads ICON resource id 1 | File icons break from a network path; a resource lives in the binary (and shows in Explorer). Shared icons never `DestroyIcon`ed |
+| 6 | Embedded-icon mode: `set_icon('')` loads ICON resource id 1 | File icons break from a network path; a resource lives in the binary. Shared icons never `DestroyIcon`ed |
 | 7 | Windows icons must be `.ico` — documented | `ExtractIconEx` never read PNGs; upstream example shipped a `.png` → empty icon slot |
 
 Internal: the C tray window class is now `L"TRAY"` (wide), icon paths are
@@ -84,7 +84,8 @@ fn main() {
 		),
 	])
 	t.init()
-	for t.loop(1) == 0 {} // blocking loop; returns -1 after t.exit()
+	for t.loop(1) == 0 {
+	} // blocking loop; returns -1 after t.exit()
 }
 ```
 

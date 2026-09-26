@@ -2,8 +2,10 @@
 
 A light cross-platform **system tray module for [V](https://vlang.io)**: show an
 icon and a menu in the system tray, with no main window — on **Linux** (X11 and
-**Wayland**, via libappindicator/StatusNotifierItem), **Windows** (native Win32
-`Shell_NotifyIcon`) and **macOS** (AppKit).
+**Wayland**, via libappindicator/StatusNotifierItem) and **Windows** (native
+Win32 `Shell_NotifyIcon`). A **macOS** (AppKit) path exists, inherited from
+upstream, but it is untested in this fork — upstream itself reported compile
+failures on recent macOS releases.
 
 This is a **fork of [spytheman/vtray](https://github.com/spytheman/vtray)**,
 which wraps the tiny C library [zserge/tray](https://github.com/zserge/tray)

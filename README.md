@@ -53,7 +53,7 @@ Linux with either toolchain:
 Via vpm:
 
 ```sh
-v install evemarco/vtray
+v install evemarco.vtray
 ```
 
 then `import evemarco.vtray` in your code. Or vendor the module (git submodule

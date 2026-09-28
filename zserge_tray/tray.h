@@ -13,6 +13,7 @@ struct tray_menu {
   char *text;
   int disabled;
   int checked;
+  int checkbox;
 
   void (*cb)(struct tray_menu *);
   void *context;
@@ -54,9 +55,13 @@ static GtkMenuShell *_tray_menu(struct tray_menu *m) {
         item = gtk_menu_item_new_with_label(m->text);
         gtk_menu_item_set_submenu(GTK_MENU_ITEM(item),
                                   GTK_WIDGET(_tray_menu(m->submenu)));
-      } else {
+      } else if (m->checked != 0 || m->checkbox != 0) {
         item = gtk_check_menu_item_new_with_label(m->text);
         gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), !!m->checked);
+      } else {
+        // libappindicator draws a checkbox column for every check menu item,
+        // checked or not, so plain items opt out unless requested
+        item = gtk_menu_item_new_with_label(m->text);
       }
       gtk_widget_set_sensitive(item, !m->disabled);
       if (m->cb != NULL) {

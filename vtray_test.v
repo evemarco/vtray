@@ -38,3 +38,22 @@ fn test_separator_and_disabled_flags() {
 	assert t.mitems[0].text == '-'
 	assert t.mitems[0].disabled == 1
 }
+
+fn test_checkbox_opt_in_defaults_to_off() {
+	mi := new_menu_item(text: 'plain')
+	assert mi.checkbox == 0
+	assert mi.checked == 0
+}
+
+fn test_set_menu_keeps_checkbox_flag() {
+	mut t := new()
+	t.set_menu([
+		new_menu_item(text: 'toggleable', checkbox: 1),
+		new_menu_item(text: 'plain'),
+		new_menu_item(text: 'checked', checked: 1),
+	])
+	assert t.mitems[0].checkbox == 1
+	assert t.mitems[1].checkbox == 0
+	assert t.mitems[2].checkbox == 0
+	assert t.mitems[2].checked == 1
+}

@@ -35,6 +35,7 @@ pub mut:
 	text     &char
 	disabled int
 	checked  int
+	checkbox int
 
 	cb      FnCTrayMenuCb
 	context voidptr
@@ -76,6 +77,11 @@ pub mut:
 	text     string
 	disabled int
 	checked  int
+	// checkbox: render the item as a check menu item even while `checked` is
+	// 0 — for toggleable items. On Linux/GTK, items without `checkbox` or
+	// `checked` render as plain menu items (no checkbox column). Windows and
+	// macOS only ever show a mark when `checked` is set.
+	checkbox int
 	cb       FnTrayMenuCb = unsafe { nil }
 	submenu  []MenuItem
 }
@@ -132,6 +138,7 @@ fn (mut t Tray) menuitems_v2c(mitems []MenuItem) &C.tray_menu {
 		ci.text = c.text.str
 		ci.disabled = c.disabled
 		ci.checked = c.checked
+		ci.checkbox = c.checkbox
 		ci.cb = fn (pcm &C.tray_menu) {
 			mut c := unsafe { &MenuItem(pcm.context) }
 			if c != unsafe { nil } && c.cb != unsafe { nil } {

@@ -17,8 +17,9 @@ fn main() {
 	t.set_menu([
 		vtray.new_menu_item(text: 'checked by default', checked: 1),
 		vtray.new_menu_item(
-			text: 'click me (toggles)'
-			cb:   fn [mut t] (omi &vtray.MenuItem) {
+			text:     'click me (toggles)'
+			checkbox: 1
+			cb:       fn [mut t] (omi &vtray.MenuItem) {
 				mut mi := unsafe { omi }
 				mi.text = time.now().str()
 				mi.checked = if mi.checked == 0 { 1 } else { 0 }

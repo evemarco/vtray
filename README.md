@@ -24,6 +24,7 @@ few small features.
 | 5 | `#flag windows -mwindows` | GUI subsystem: no stray console window next to the tray app |
 | 6 | Embedded-icon mode: `set_icon('')` loads ICON resource id 1 | File icons break from a network path; a resource lives in the binary. Shared icons never `DestroyIcon`ed |
 | 7 | Windows icons must be `.ico` — documented | `ExtractIconEx` never read PNGs; upstream example shipped a `.png` → empty icon slot |
+| 8 | Check items opt-in: `MenuItem.checkbox` | libappindicator draws a checkbox on every check item; rows are plain unless `checkbox: 1` / `checked: 1` |
 
 Internal: the C tray window class is now `L"TRAY"` (wide), icon paths are
 converted with `MultiByteToWideChar(CP_UTF8, ...)` at the C boundary, and the
@@ -76,6 +77,7 @@ fn main() {
 	t.set_tooltip('my app')
 	t.set_menu([
 		vtray.new_menu_item(text: 'checked by default', checked: 1),
+		vtray.new_menu_item(text: 'toggleable, starts unchecked', checkbox: 1),
 		vtray.new_menu_item(text: 'disabled', disabled: 1),
 		vtray.new_menu_item(text: '-'),
 		vtray.new_menu_item(
@@ -92,6 +94,20 @@ fn main() {
 ```
 
 See `examples/simple_tray.v` for a complete runnable demo.
+
+### Check items (Linux)
+
+On Linux/GTK, menu items render as **plain items by default**: libappindicator
+draws a checkbox column on every check menu item, checked or not, so checkboxes
+are opt-in per item:
+
+- `checkbox: 1` — rendered as a check item (toggleable), even while `checked`
+  is 0;
+- `checked: 1` — rendered as a check item shown checked (backward-compatible:
+  existing menus keep their checkbox).
+
+On Windows and macOS nothing changes: the mark shows only while `checked` is
+set, and `checkbox` has no effect there.
 
 ### Embedding the Windows icon in the executable (recommended)
 
